@@ -19,13 +19,14 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input type="hidden" name="config_id" value="{{ cfg.id }}">
       <div class="field"><label for="name">Preset name</label><input id="name" name="name" type="text" maxlength="80" value="{{ cfg.name }}"></div>
-      <div class="row">
         <div class="field"><label for="provider">Provider</label>
-          <select id="provider" name="provider">{% for p in providers %}<option value="{{ p }}" {% if p == cfg.provider %}selected{% endif %}>{{ p|title }}</option>{% endfor %}</select></div>
+          <select id="provider" name="provider" hx-get="/app/models" hx-target="#model" hx-swap="innerHTML" hx-trigger="change" hx-include="#provider">{% for p in providers %}<option value="{{ p }}" {% if p == cfg.provider %}selected{% endif %}>{{ p|title }}</option>{% endfor %}</select></div>
         <div class="field"><label for="model">Model</label>
-          <input id="model" name="model" type="text" maxlength="80" value="{{ cfg.model }}" placeholder="{{ default_models.get(cfg.provider, '') }}" aria-describedby="model-hint"></div>
-      </div>
-      <div class="hint" id="model-hint">Blank uses the cheapest capable default for the provider.</div>
+          <select id="model" name="model" aria-describedby="model-hint">
+            {% with ids=model_ids[0], selected=cfg.model, default=default_models.get(cfg.provider, '') %}{% include "partials/model_options.html" %}{% endwith %}
+          </select></div>
+
+      <div class="hint" id="model-hint">{% if model_ids[1] %}Live list of models your key can use.{% else %}Recommended models. Add an API key to see every model your key can use.{% endif %} “Provider default” is the cheapest capable model.</div>
       <div class="field mt"><label for="persona">Persona</label>
         <textarea id="persona" name="persona" rows="3" maxlength="600" placeholder="e.g. You coach executives moving into Data & AI leadership roles.">{{ cfg.persona }}</textarea></div>
       <div class="row">
@@ -48,13 +49,35 @@
 
   <section class="panel" aria-labelledby="run-title">
     <div class="panel-title" id="run-title">{{ icon("play") }} Run “{{ cfg.name }}”</div>
-    <form hx-post="/app/modules/{{ module.id }}/run" hx-target="#output" hx-swap="innerHTML" hx-indicator="#run-btn" hx-disabled-elt="#run-btn">
+    <form hx-post="/app/modules/{{ module.id }}/run" hx-encoding="multipart/form-data" hx-target="#output" hx-swap="innerHTML" hx-indicator="#run-btn" hx-disabled-elt="#run-btn">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input type="hidden" name="config_id" value="{{ cfg.id }}">
+      {% if spec and spec.fields %}
+        {% for f in spec.fields %}
+        <div class="field">
+          <label for="f-{{ f.name }}">{{ f.label }}{% if f.required %} <span class="subtle">(required)</span>{% endif %}</label>
+          {% if f.kind == "select" %}
+            <select id="f-{{ f.name }}" name="{{ f.name }}">{% for o in f.options %}<option>{{ o }}</option>{% endfor %}</select>
+          {% else %}
+            <textarea id="f-{{ f.name }}" name="{{ f.name }}" rows="{{ f.rows }}" maxlength="15000" placeholder="{{ f.placeholder }}" class="{{ 'short' if f.rows < 4 else '' }}"></textarea>
+            {% if f.upload %}
+            <div class="attach">
+              <label class="btn btn-sm" for="f-{{ f.name }}-file">{{ icon("file-text", "icon-sm") }} Attach file</label>
+              <input class="file-input" id="f-{{ f.name }}-file" name="{{ f.name }}_file" type="file" accept=".pdf,.docx,.txt,.md" data-file-label="fl-{{ f.name }}">
+              <span class="subtle" id="fl-{{ f.name }}">PDF, Word (.docx), .txt or .md · max 2 MB</span>
+            </div>
+            {% endif %}
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% set chip_target = "f-" ~ (spec.fields|selectattr("kind", "equalto", "text")|list|last).name %}
+      {% else %}
       <label for="user_input">{{ spec.input_label if spec else "Your input" }}</label>
       <textarea id="user_input" name="user_input" required maxlength="8000" placeholder="{{ spec.input_placeholder if spec else '' }}"></textarea>
+        {% set chip_target = "user_input" %}
+      {% endif %}
       {% if spec and spec.examples %}
-      <div class="chips" aria-label="Examples">{% for ex in spec.examples %}<button type="button" class="chip" data-fill="{{ ex }}">{{ ex }}</button>{% endfor %}</div>
+      <div class="chips" aria-label="Examples">{% for ex in spec.examples %}<button type="button" class="chip" data-fill="{{ ex }}" data-target="{{ chip_target }}">{{ ex }}</button>{% endfor %}</div>
       {% endif %}
       <div class="flex between mt">
         <span class="subtle">{{ icon("shield-check", "icon-sm") }} Guardrail {{ module.id }} v{{ module.version }} applied</span>

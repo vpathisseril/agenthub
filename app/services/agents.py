@@ -98,6 +98,15 @@ def _platform_key(provider: str) -> str:
     }.get(provider, "")
 
 
+def resolve_key(db: Session, user: User, provider: str) -> tuple[str, str]:
+    """Return (api_key, source): the user's own key if saved, else the platform key."""
+    byok = db.scalar(select(ApiKey).where(ApiKey.user_id == user.id, ApiKey.provider == provider))
+    key = (decrypt_secret(byok.encrypted_key) or "") if byok else ""
+    if key:
+        return key, "byok"
+    return _platform_key(provider), "platform"
+
+
 def build_messages(spec: ModuleSpec, cfg: AgentConfig, user_input: str) -> tuple[str, str]:
     """System = MODULE guardrail (highest priority) + user prefs; input is delimited data."""
     persona = cfg.persona.strip()[:600]
@@ -153,8 +162,9 @@ def run_agent(db: Session, user: User, cfg: AgentConfig, user_input: str) -> Run
     user_input = user_input.strip()
     if not user_input:
         raise AgentDenied("Please enter some input.")
-    if len(user_input) > MAX_INPUT_CHARS:
-        raise AgentDenied(f"Input is too long (max {MAX_INPUT_CHARS:,} characters).")
+    limit = spec.max_input_chars or MAX_INPUT_CHARS
+    if len(user_input) > limit:
+        raise AgentDenied(f"Input is too long (max {limit:,} characters).")
     if cfg.provider not in allowed_providers(db):
         raise AgentDenied("That provider is disabled by the administrator.")
 
@@ -162,13 +172,8 @@ def run_agent(db: Session, user: User, cfg: AgentConfig, user_input: str) -> Run
     max_tokens = min(cfg.max_tokens, module.max_tokens if module else spec.max_tokens)
     model = cfg.model or default_model(cfg.provider)
 
-    byok = db.scalar(
-        select(ApiKey).where(ApiKey.user_id == user.id, ApiKey.provider == cfg.provider)
-    )
-    api_key = (decrypt_secret(byok.encrypted_key) or "") if byok else ""
-    key_source = "byok" if api_key else "platform"
-    if not api_key:
-        api_key = _platform_key(cfg.provider)
+    api_key, key_source = resolve_key(db, user, cfg.provider)
+    if key_source == "platform":
         used = tokens_used_today(db, user.id)
         if used >= user.daily_token_cap:
             blocked = RunResult("", "blocked", cfg.provider, model)
@@ -212,8 +217,22 @@ def run_agent(db: Session, user: User, cfg: AgentConfig, user_input: str) -> Run
 
     req = LLMRequest(system, message, model, max_tokens, cfg.temperature, module_id=spec.id)
     started = time.monotonic()
+    fallback_note = ""
     try:
-        resp = provider.complete(req, api_key)
+        try:
+            resp = provider.complete(req, api_key)
+        except LLMError as exc:
+            # Saved model retired / not on this key: retry once with the provider default.
+            fallback = default_model(cfg.provider)
+            if exc.kind != "model" or demo or model == fallback:
+                raise
+            fallback_note = (
+                f"Model “{model}” isn't available for this key, so “{fallback}” was used. "
+                "Pick a model from the list in Agent configuration and save."
+            )
+            model = fallback
+            req = LLMRequest(system, message, model, max_tokens, cfg.temperature, module_id=spec.id)
+            resp = provider.complete(req, api_key)
     except LLMError as exc:
         failed = RunResult(
             "", "error", cfg.provider, model, latency_ms=int((time.monotonic() - started) * 1000)
@@ -237,6 +256,8 @@ def run_agent(db: Session, user: User, cfg: AgentConfig, user_input: str) -> Run
         result.notes.append(
             "Demo mode: no API key configured, so a built-in sample model answered."
         )
+    if fallback_note:
+        result.notes.append(fallback_note)
     if spec.id == "sql_assistant":
         _post_process_sql(result)
     _cache[cache_key] = (time.monotonic(), result)

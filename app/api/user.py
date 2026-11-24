@@ -6,14 +6,16 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from app.core.db import get_db
 from app.core.deps import csrf_protect, current_user
 from app.core.ratelimit import rate_limit
 from app.core.security import encrypt_secret
 from app.core.templating import flash, render
+from app.llm import catalog
 from app.models import AgentConfig, AgentRun, ApiKey, Module, User
-from app.services import agents, audit
+from app.services import agents, audit, inputs
 from app.services.markdown_lite import render_markdown
 from app.services.modules_registry import get_spec
 from app.services.settings_store import allowed_providers
@@ -121,6 +123,9 @@ def builder(
                 p: agents.default_model(p) for p in ("anthropic", "openai", "gemini")
             },
             "nav_modules": _my_modules(db, user),
+            "model_ids": catalog.list_models(
+                cfg.provider, agents.resolve_key(db, user, cfg.provider)[0]
+            ),
         },
     )
 
@@ -161,20 +166,27 @@ def save_config(
 
 
 @router.post("/modules/{module_id}/run", dependencies=[Depends(rate_limit(20, 60))])
-def run(
+async def run(
     request: Request,
     module_id: str,
-    config_id: int = Form(...),
-    user_input: str = Form(..., max_length=20000),
     user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ) -> Response:
     module = _module_or_403(db, user, module_id)
-    cfg = _config_for(db, user, module, config_id)
+    spec = get_spec(module_id)
+    form = await request.form()
+    cfg_raw = form.get("config_id")
+    cfg = _config_for(
+        db, user, module, int(cfg_raw) if isinstance(cfg_raw, str) and cfg_raw.isdigit() else None
+    )
     try:
-        result = agents.run_agent(db, user, cfg, user_input)
-    except agents.AgentDenied as exc:
+        if spec is None:
+            raise inputs.InputError("Unknown module.")
+        user_input, notes = await inputs.compose_input(spec, form)
+        result = await run_in_threadpool(agents.run_agent, db, user, cfg, user_input)
+    except (agents.AgentDenied, inputs.InputError) as exc:
         return render(request, "partials/run_result.html", {"error": str(exc)})
+    result.notes = [*notes, *result.notes]
     return render(
         request,
         "partials/run_result.html",
@@ -184,6 +196,26 @@ def run(
             "used": agents.tokens_used_today(db, user.id),
             "cap": user.daily_token_cap,
         },
+    )
+
+
+@router.get("/models")
+def models(
+    request: Request,
+    provider: str = "anthropic",
+    selected: str = "",
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    """<option> list for the Model dropdown (live from the provider when a key exists)."""
+    if provider not in allowed_providers(db):
+        raise HTTPException(400, "Provider not allowed")
+    key, _ = agents.resolve_key(db, user, provider)
+    ids, live = catalog.list_models(provider, key)
+    return render(
+        request,
+        "partials/model_options.html",
+        {"ids": ids, "live": live, "selected": selected, "default": agents.default_model(provider)},
     )
 
 

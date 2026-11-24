@@ -1,6 +1,14 @@
 # Changelog
 All notable changes follow [Keep a Changelog](https://keepachangelog.com) and SemVer.
 
+## [1.2.0] - 2026-11-24
+### Added
+- Career Coach v1.1.0: separate **Resume** and **Job description** inputs, each with PDF / Word (.docx) / .txt / .md attachment (2 MB, text extracted in memory, never stored), a **What do you need?** task picker and optional notes. Guardrail is task-aware and skips the match score when no JD is given.
+- **Model dropdown** per provider: live list from the provider when a key is available (cached 1h), curated current models otherwise; refreshes when the provider changes.
+### Fixed
+- "Provider error 400": retired default models (gpt-4o-mini, gemini-2.5-flash) replaced with current ones; provider error text is shown; a retired/unavailable saved model automatically falls back to the provider default; models that reject a custom temperature are retried without it.
+- Module version bumps now refresh that module's token/temperature defaults.
+
 ## [1.1.0] - 2026-11-24
 ### Added
 - Approval email notifications to the owner: new request (with approval instructions and SLA deadline), auto-approved FYI, SLA-breach alert. SMTP or log backend; owner email editable in Admin → Settings with a "Send test email" button. 6 new tests (72 total).

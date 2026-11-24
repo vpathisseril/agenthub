@@ -22,6 +22,40 @@ _FRONT = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.S)
 
 
 @dataclass(frozen=True)
+class InputField:
+    """A labelled input declared in MODULE.md front-matter (`fields:`)."""
+
+    name: str
+    label: str
+    kind: str = "text"  # text | select
+    placeholder: str = ""
+    required: bool = False
+    upload: bool = False  # allow attaching a PDF/DOCX/TXT/MD file
+    rows: int = 6
+    options: tuple[str, ...] = ()
+
+
+def _fields(raw: Any) -> tuple[InputField, ...]:
+    out = []
+    for f in raw or []:
+        if not isinstance(f, dict) or not re.fullmatch(r"[a-z_]{1,40}", str(f.get("name", ""))):
+            raise ValueError(f"Invalid field definition: {f!r}")
+        out.append(
+            InputField(
+                name=str(f["name"]),
+                label=str(f.get("label", f["name"])),
+                kind="select" if f.get("type") == "select" else "text",
+                placeholder=str(f.get("placeholder", "")),
+                required=bool(f.get("required", False)),
+                upload=bool(f.get("upload", False)),
+                rows=int(f.get("rows", 6)),
+                options=tuple(str(o) for o in f.get("options", [])),
+            )
+        )
+    return tuple(out)
+
+
+@dataclass(frozen=True)
 class ModuleSpec:
     id: str
     name: str
@@ -37,6 +71,8 @@ class ModuleSpec:
     input_placeholder: str
     examples: list[str] = field(default_factory=list)
     raw: str = ""
+    fields: tuple[InputField, ...] = ()
+    max_input_chars: int = 0  # 0 = platform default
 
 
 def _section(body: str, title: str) -> str:
@@ -65,6 +101,8 @@ def parse_module(text: str) -> ModuleSpec:
         input_placeholder=str(meta.get("input_placeholder", "")),
         examples=[str(x) for x in meta.get("examples", [])],
         raw=text,
+        fields=_fields(meta.get("fields")),
+        max_input_chars=int(meta.get("max_input_chars", 0)),
     )
 
 
@@ -100,5 +138,8 @@ def sync_modules(db: Session) -> None:
             )
         else:
             row.name, row.description, row.icon = spec.name, spec.description, spec.icon
+            if row.version != spec.version:
+                # A new MODULE.md version resets its limits to the new defaults.
+                row.max_tokens, row.temperature = spec.max_tokens, spec.temperature
             row.version = spec.version
     db.commit()

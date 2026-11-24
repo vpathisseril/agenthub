@@ -15,13 +15,13 @@
 | **Safety** | Guardrails as code (`MODULE.md`), prompt-injection defences, escaped output, read-only SQL sandbox |
 | **Cost** | Per-user daily token caps, model tiering, 10-minute cache, cost per run/module/provider |
 | **Choice** | Anthropic, OpenAI and Gemini behind one interface; platform key or bring-your-own (encrypted) |
-| **Evidence** | Gherkin AC → 72 automated tests (95% coverage), CI gates, threat model, ADRs |
+| **Evidence** | Gherkin AC → 92 automated tests (95% coverage), CI gates, threat model, ADRs |
 
 ## Features
 - **Landing and signup** with instant auto-approval or manual review (24h SLA countdown, breach flagging, optional auto-approve on breach)
 - **Owner email alerts** for every access request, with approval instructions and the SLA deadline, plus overdue alerts
-- **Agent Builder**: provider, model, persona, tone, output format, temperature, max tokens (clamped by admin), saved presets
-- **Five starter modules**: Career Coach · Research Summarizer · Data/SQL Assistant (runs read-only SQL on a telecom sample) · Status Report Writer · Requirements Analyst
+- **Agent Builder**: provider, live model dropdown, persona, tone, output format, temperature, max tokens (clamped by admin), saved presets
+- **Five starter modules**: Career Coach (attach resume + job description as PDF/Word) · Research Summarizer · Data/SQL Assistant (runs read-only SQL on a telecom sample) · Status Report Writer · Requirements Analyst
 - **Admin console**: approval queue, user status/role/caps/grants, module catalog and limits, platform settings, audit log
 - **Reporting and analytics**: signups, median approval time and % within SLA, DAU/WAU, runs, tokens, estimated cost, error rate, p95 latency; charts; CSV export
 - **Demo mode**: with no API keys, a built-in sample model answers, so the product can always be shown at zero cost

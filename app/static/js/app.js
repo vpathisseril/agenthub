@@ -29,6 +29,23 @@
     }
   });
 
+  // Show the chosen file name next to "Attach file"
+  document.addEventListener("change", function (ev) {
+    var input = ev.target;
+    if (input.matches && input.matches("input[type=file][data-file-label]")) {
+      var out = document.getElementById(input.dataset.fileLabel);
+      if (!out) return;
+      var f = input.files && input.files[0];
+      if (f && f.size > 2 * 1024 * 1024) {
+        out.textContent = f.name + " is larger than 2 MB — choose a smaller file";
+        out.className = "subtle"; input.value = "";
+      } else if (f) {
+        out.textContent = "Attached: " + f.name + " (" + Math.max(1, Math.round(f.size / 1024)) + " KB)";
+        out.className = "file-chosen";
+      }
+    }
+  });
+
   // Live label for range inputs
   document.addEventListener("input", function (ev) {
     if (ev.target.matches("input[type=range][data-out]")) {

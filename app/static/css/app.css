@@ -192,3 +192,9 @@ progress.bar::-webkit-progress-value { background: var(--grad); border-radius: 9
 progress.bar::-moz-progress-bar { background: var(--grad); border-radius: 999px; }
 .side-btn { width: 100%; border: 0; background: none; cursor: pointer; font: inherit; font-weight: 500; }
 @media (max-width: 600px) { .nav-actions .theme-toggle, .nav-actions .btn-ghost { display: none; } }
+.attach { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.file-input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.file-input:focus-visible + span, .attach label:focus-within { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+.attach .file-chosen { color: var(--ok); font-weight: 600; }
+textarea.short { min-height: 64px; }
+.attach label { margin: 0; cursor: pointer; }

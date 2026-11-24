@@ -27,6 +27,10 @@ class LLMResponse:
 class LLMError(RuntimeError):
     """Provider call failed (network, auth, quota). Message is safe to show users."""
 
+    def __init__(self, message: str, kind: str = "other") -> None:
+        super().__init__(message)
+        self.kind = kind  # auth | model | rate | temperature | network | other
+
 
 class LLMProvider(Protocol):
     name: str
@@ -38,8 +42,8 @@ class LLMProvider(Protocol):
 # update from each vendor's pricing page. Unknown models fall back to provider default.
 PRICING: dict[str, tuple[float, float]] = {
     "anthropic": (1.00, 5.00),
-    "openai": (0.15, 0.60),
-    "gemini": (0.30, 2.50),
+    "openai": (0.10, 0.50),
+    "gemini": (0.10, 0.40),
     "fake": (0.0, 0.0),
     "demo": (0.0, 0.0),
 }

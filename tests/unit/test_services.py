@@ -136,7 +136,7 @@ def test_access_and_validation_denials(db: Session) -> None:
     with pytest.raises(agents.AgentDenied):
         agents.run_agent(db, user, cfg, "   ")
     with pytest.raises(agents.AgentDenied, match="too long"):
-        agents.run_agent(db, user, cfg, "x" * (agents.MAX_INPUT_CHARS + 1))
+        agents.run_agent(db, user, cfg, "x" * 24_001)
     set_setting(db, "allowed_providers", "openai")
     with pytest.raises(agents.AgentDenied, match="disabled"):
         agents.run_agent(db, user, cfg, "hello")

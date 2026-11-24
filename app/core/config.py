@@ -44,8 +44,8 @@ class Settings(BaseSettings):
 
     # Default models per provider (verify current names on each vendor's site)
     anthropic_model: str = "claude-haiku-5-5"
-    openai_model: str = "gpt-4o-mini"
-    gemini_model: str = "gemini-2.5-flash"
+    openai_model: str = "gpt-6-luna"
+    gemini_model: str = "gemini-3.5-flash-lite"
 
     @property
     def is_production(self) -> bool:
