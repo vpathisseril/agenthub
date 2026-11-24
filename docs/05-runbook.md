@@ -1,3 +1,45 @@
-# 05 — Runbook
-_Filled in Phase 7._ GitHub setup and branch protection, Replit import, Postgres,
-Secrets, Autoscale deployment, smoke test, rollback (redeploy previous tag).
+# 05 — Runbook: GitHub → Replit
+
+## 1. Push to GitHub
+```bash
+git remote add origin https://github.com/<you>/agenthub.git
+git push -u origin main --tags
+```
+In GitHub, go to Settings → Branches → add a rule for `main`: require a pull request and require the **CI / quality** check to pass.
+
+## 2. Import into Replit
+1. Replit → **Create App → Import from GitHub** → choose `agenthub`. `.replit` is detected automatically.
+2. **Database tool → Create a PostgreSQL database.** Replit adds `DATABASE_URL` to Secrets.
+3. **Secrets** (padlock icon). Add:
+
+| Secret | Value |
+| --- | --- |
+| `ENVIRONMENT` | `prod` |
+| `SECRET_KEY` | `python -c "import secrets;print(secrets.token_urlsafe(48))"` |
+| `FERNET_KEY` | `python -c "from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())"` |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Your admin login (a strong password) |
+| `ANTHROPIC_API_KEY` (optional) | Platform key. Leave all keys blank to run in demo mode |
+| `OPENAI_API_KEY`, `GEMINI_API_KEY` (optional) | Additional providers |
+
+4. Press **Run**. The run command applies migrations (`alembic upgrade head`) and then starts uvicorn on port 8000. Open the webview and sign in as the admin.
+5. Optional: run `python -m scripts.seed_demo` in the Shell to fill the analytics dashboard with 30 days of demo data.
+
+## 3. Deploy
+**Deploy → Autoscale** (the build and run commands come from `.replit`). Make sure the deployment has the same Secrets. Then run the smoke test against the live URL:
+```bash
+python -m scripts.smoke https://<your-app>.replit.app
+```
+
+## Operations
+| Task | How |
+| --- | --- |
+| Update | Merge a PR to `main` → in Replit, pull from the Git pane → Redeploy |
+| Roll back | `git checkout v0.N` (or revert) → push → Redeploy; Replit also keeps previous deployments |
+| Rotate SECRET_KEY | Update the Secret and redeploy (signs everyone out) |
+| Rotate FERNET_KEY | Users must re-enter their BYOK keys (old ciphertext can't be decrypted) |
+| Health | `GET /health` returns status, environment and module list |
+| Change approval policy | Admin → Settings (no redeploy) |
+
+## Notes
+- Rate limiting and the response cache are in-memory, per instance. Keep Autoscale at max 1 instance for the prototype, or move both to Redis.
+- Local dev with SQLite creates tables automatically. With Postgres, always use `alembic upgrade head`.

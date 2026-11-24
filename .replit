@@ -1,14 +1,14 @@
 entrypoint = "app/main.py"
 modules = ["python-3.12", "postgresql-16"]
-run = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+run = "pip install -q -r requirements.txt && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
 [nix]
 channel = "stable-24_05"
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["sh", "-c", "pip install ."]
-run = ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+build = ["sh", "-c", "pip install -r requirements.txt"]
+run = ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"]
 
 [[ports]]
 localPort = 8000

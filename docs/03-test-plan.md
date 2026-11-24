@@ -6,7 +6,7 @@
 | Unit | pytest | Security helpers, Markdown sanitizer, module registry, SQL sandbox, provider adapters (mocked HTTP) |
 | Service | pytest + SQLite | Approval workflow and SLA, agent pipeline (caps, BYOK, cache, errors, injection), analytics |
 | API / acceptance | FastAPI TestClient | Every AC in 01-requirements, end to end through HTTP, CSRF and sessions |
-| UI | Playwright screenshots (`scripts/shoot.py`) | Landing, auth, dashboard, builder, admin pages in desktop, mobile and light themes; console-error check |
+| UI | Playwright screenshot review (dev-only) | Landing, auth, dashboard, builder, admin pages in desktop, mobile and light themes; console-error check |
 | Static | ruff, mypy --strict, bandit, pip-audit, gitleaks | Every push (CI) |
 
 The LLM is replaced by `FakeProvider` (`LLM_FAKE_MODE=true`), so tests are deterministic, offline and cost nothing.

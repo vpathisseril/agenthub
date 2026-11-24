@@ -10,7 +10,7 @@ Optimize for: security > correctness > clarity > speed.
 
 ## Locked stack
 Python 3.12, FastAPI, SQLAlchemy 2 + Alembic, Postgres (SQLite for tests only),
-Jinja2 + HTMX + Alpine.js, Tailwind CSS (standalone CLI), Lucide icons, argon2,
+Jinja2 + HTMX + vanilla JS, token-based CSS (docs/design-tokens.md; see ADR-005), Lucide icons, argon2,
 itsdangerous sessions, pytest, ruff, mypy, bandit, pip-audit, gitleaks, GitHub Actions.
 LLM providers: Anthropic, OpenAI, Gemini behind one `LLMProvider` protocol.
 Keys: hybrid — platform key with per-user daily token caps, or user BYOK (Fernet-encrypted).
