@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="shell">
+  <aside class="sidebar" aria-label="Sidebar">
+    <a href="/" class="brand"><span class="logo">{{ icon("sparkles", "icon-sm") }}</span>AgentHub</a>
+    <a class="side-link {% if path == '/app' %}active{% endif %}" href="/app">{{ icon("layout-dashboard") }} Dashboard</a>
+    {% if nav_modules %}<div class="side-label">My agents</div>{% endif %}
+    {% for m in nav_modules or [] %}
+      <a class="side-link {% if path.startswith('/app/modules/' ~ m.id) %}active{% endif %}" href="/app/modules/{{ m.id }}">{{ icon(m.icon) }} {{ m.name }}</a>
+    {% endfor %}
+    <div class="side-label">Account</div>
+    <a class="side-link {% if path == '/app/settings' %}active{% endif %}" href="/app/settings">{{ icon("key-round") }} API keys</a>
+    {% if user and user.is_admin %}
+      <div class="side-label">Admin</div>
+      <a class="side-link {% if path == '/admin' %}active{% endif %}" href="/admin">{{ icon("chart-line") }} Analytics</a>
+      <a class="side-link {% if path == '/admin/users' %}active{% endif %}" href="/admin/users">{{ icon("users") }} Users &amp; access</a>
+      <a class="side-link {% if path == '/admin/modules' %}active{% endif %}" href="/admin/modules">{{ icon("boxes") }} Modules</a>
+      <a class="side-link {% if path == '/admin/settings' %}active{% endif %}" href="/admin/settings">{{ icon("settings") }} Settings</a>
+      <a class="side-link {% if path == '/admin/audit' %}active{% endif %}" href="/admin/audit">{{ icon("scroll-text") }} Audit log</a>
+    {% endif %}
+    <div class="side-foot">
+      <form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="side-link side-btn" type="submit">{{ icon("log-out") }} Sign out</button></form>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <h1>{% block heading %}{% endblock %}</h1>
+      <div class="who">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle light or dark theme">{{ icon("zap", "icon-sm") }}</button>
+        {% if user %}<span class="muted">{{ user.full_name }}</span>{% if user.is_admin %}<span class="badge b-info">Admin</span>{% endif %}
+        <span class="avatar" aria-hidden="true">{{ user.full_name[:1]|upper }}</span>{% endif %}
+      </div>
+    </header>
+    <main id="main" class="content">
+      {% include "_flash.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

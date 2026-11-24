@@ -12,3 +12,5 @@ htmlcov/
 app/static/css/output.css
 node_modules/
 .DS_Store
+data/
+ci.db

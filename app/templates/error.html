@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} · AgentHub{% endblock %}
+{% block body %}
+{% include "_public_nav.html" %}
+<main id="main" class="auth-wrap">
+  <div class="card auth-card">
+    <div class="feature-icon">{{ icon("triangle-alert") }}</div>
+    <h2>{% if code == 403 %}Access restricted{% elif code == 404 %}Page not found{% elif code == 429 %}Slow down{% else %}Something went wrong{% endif %}</h2>
+    <p class="muted">{{ detail }}</p>
+    <a class="btn" href="/app">Back to dashboard</a>
+  </div>
+</main>
+{% endblock %}

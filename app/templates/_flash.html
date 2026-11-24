@@ -1,0 +1,6 @@
+{% for f in flashes %}
+<div class="alert alert-{{ f.kind if f.kind in ['error','success','info'] else 'info' }}" role="status">{{ f.message }}</div>
+{% endfor %}
+{% if errors %}
+<div class="alert alert-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+{% endif %}

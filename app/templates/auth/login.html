@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Sign in · AgentHub{% endblock %}
+{% block body %}
+{% include "_public_nav.html" %}
+<main id="main" class="auth-wrap">
+  <div class="card auth-card">
+    <h2>Welcome back</h2>
+    <p class="muted">Sign in to open your agents.</p>
+    {% include "_flash.html" %}
+    <form method="post" action="/login">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field"><label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="username" required value="{{ email or '' }}"></div>
+      <div class="field"><label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required></div>
+      <button class="btn btn-primary" type="submit">{{ icon("log-in", "icon-sm") }} Sign in</button>
+    </form>
+    <p class="subtle mt">New here? <a href="/signup">Request access</a></p>
+  </div>
+</main>
+{% endblock %}

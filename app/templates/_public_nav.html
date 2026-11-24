@@ -1,0 +1,17 @@
+<header class="nav">
+  <div class="container">
+    <a href="/" class="brand"><span class="logo">{{ icon("sparkles", "icon-sm") }}</span>AgentHub</a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/#product">Product</a><a href="/#modules">Modules</a><a href="/#security">Security</a><a href="/#faq">FAQ</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle light or dark theme">{{ icon("zap", "icon-sm") }}</button>
+      {% if user %}
+        <a class="btn btn-primary btn-sm" href="/app">Open dashboard {{ icon("arrow-right", "icon-sm") }}</a>
+      {% else %}
+        <a class="btn btn-ghost btn-sm" href="/login">Sign in</a>
+        <a class="btn btn-primary btn-sm" href="/signup">Get access</a>
+      {% endif %}
+    </div>
+  </div>
+</header>

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Request access · AgentHub{% endblock %}
+{% block body %}
+{% include "_public_nav.html" %}
+<main id="main" class="auth-wrap">
+  <div class="card auth-card">
+    <h2>Request access</h2>
+    <p class="muted">{% if mode == "auto" %}Approval is instant — you'll be signed in right away.{% else %}An administrator reviews requests within 24 hours.{% endif %}</p>
+    {% include "_flash.html" %}
+    <form method="post" action="/signup" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field"><label for="full_name">Full name</label>
+        <input id="full_name" name="full_name" type="text" autocomplete="name" required maxlength="120" value="{{ form.full_name or '' }}"></div>
+      <div class="field"><label for="email">Work email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required maxlength="255" value="{{ form.email or '' }}"></div>
+      <div class="field"><label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="128" aria-describedby="pw-hint">
+        <div class="hint" id="pw-hint">At least 12 characters, with upper- and lower-case letters and a number.</div></div>
+      <div class="field"><label for="reason">How will you use AgentHub? <span class="subtle">(optional)</span></label>
+        <textarea id="reason" name="reason" maxlength="1000" rows="3">{{ form.reason or '' }}</textarea></div>
+      <button class="btn btn-primary" type="submit">Request access {{ icon("arrow-right", "icon-sm") }}</button>
+    </form>
+    <p class="subtle mt">Already approved? <a href="/login">Sign in</a></p>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Request received · AgentHub{% endblock %}
+{% block body %}
+{% include "_public_nav.html" %}
+<main id="main" class="auth-wrap">
+  <div class="card auth-card">
+    <div class="feature-icon">{{ icon("timer") }}</div>
+    {% if req and req.status == "rejected" %}
+      <h2>Request not approved</h2>
+      <p class="muted">Your request for <strong>{{ req.user.email }}</strong> was not approved. Contact the administrator if you think this is a mistake.</p>
+    {% elif req %}
+      <h2>Request received</h2>
+      <p class="muted">Thanks, {{ req.user.full_name }}. Your request is <span class="badge b-warn">pending review</span>.</p>
+      {% if req.sla_due_at %}
+      <p>We'll decide by <strong class="num">{{ req.sla_due_at.strftime("%b %d, %Y %H:%M") }} UTC</strong>
+        {% if req.sla_due_at < now %}<span class="badge b-bad">overdue — escalated</span>{% endif %}.</p>
+      {% endif %}
+      <p class="subtle">You can close this page. Sign in again once you're approved.</p>
+    {% else %}
+      <h2>Check your status</h2>
+      <p class="muted">Sign in to see the status of your access request.</p>
+    {% endif %}
+    <a class="btn mt" href="/login">{{ icon("log-in", "icon-sm") }} Go to sign in</a>
+  </div>
+</main>
+{% endblock %}

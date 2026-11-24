@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}AgentHub — Governed AI agents for teams{% endblock %}
+{% block body %}
+{% include "_public_nav.html" %}
+<main id="main">
+  <section class="hero">
+    <div class="container">
+      <span class="eyebrow"><span class="dot"></span>Multi-model · Governed · Cost-aware</span>
+      <h1>Your AI agents,<br><span class="grad-text">governed.</span></h1>
+      <p class="lead">Configure purpose-built agents for career growth, research, data and executive reporting — with role-based access, guardrails as code and per-user cost controls built in.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" href="/signup">Request access {{ icon("arrow-right", "icon-sm") }}</a>
+        <a class="btn btn-lg" href="#how">See how it works</a>
+      </div>
+      <div class="hero-shot">
+        <img src="/static/img/hero-dashboard.webp" width="1600" height="1000" alt="AgentHub dashboard showing module cards, daily token usage and recent agent runs" fetchpriority="high">
+      </div>
+    </div>
+  </section>
+
+  <div class="container strip" aria-label="Built with">
+    <span>FastAPI</span><span>Postgres</span><span>Anthropic</span><span>OpenAI</span><span>Gemini</span><span>HTMX</span><span>Replit</span>
+  </div>
+
+  <section class="section" id="product">
+    <div class="container">
+      <div class="section-head"><div class="kicker">Platform</div><h2>Enterprise controls, without enterprise drag.</h2>
+        <p class="muted">Everything a leader needs to put AI in front of people safely: who can use what, how much it costs, and a record of every action.</p></div>
+      <div class="grid g4">
+        <div class="card"><div class="feature-icon">{{ icon("shield-check") }}</div><h3>Governed access</h3><p>Auto or manual approval with a 24-hour SLA, roles, and per-module grants.</p></div>
+        <div class="card"><div class="feature-icon">{{ icon("cpu") }}</div><h3>Bring your own model</h3><p>Anthropic, OpenAI or Gemini — use the platform key or your own, encrypted at rest.</p></div>
+        <div class="card"><div class="feature-icon">{{ icon("gauge") }}</div><h3>Cost guardrails</h3><p>Daily token caps, model tiering per module and a 10-minute response cache.</p></div>
+        <div class="card"><div class="feature-icon">{{ icon("chart-column") }}</div><h3>Audit &amp; analytics</h3><p>Runs, tokens, cost, latency and approval SLA — with CSV export and a full audit trail.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt0" id="modules">
+    <div class="container">
+      <div class="section-head"><div class="kicker">Modules</div><h2>Purpose-built agents, ready on day one.</h2>
+        <p class="muted">Each module ships with its own guardrail file that is enforced on every run.</p></div>
+      <div class="grid g5">
+        {% for m in modules %}
+        <div class="card module-card"><div class="feature-icon">{{ icon(m.icon) }}</div><h3>{{ m.name }}</h3><p>{{ m.description }}</p></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt0" id="how">
+    <div class="container">
+      <div class="section-head"><div class="kicker">How it works</div><h2>From request to result in four steps.</h2></div>
+      <div class="grid g4 steps">
+        <div class="card step"><span class="step-num">01</span><h3>Request access</h3><p>Sign up in a minute. Approval is instant or reviewed within 24 hours.</p></div>
+        <div class="card step"><span class="step-num">02</span><h3>Pick a module</h3><p>See only the agents your administrator has granted you.</p></div>
+        <div class="card step"><span class="step-num">03</span><h3>Configure your agent</h3><p>Choose provider, model, persona, tone and output format. Save presets.</p></div>
+        <div class="card step"><span class="step-num">04</span><h3>Run and reuse</h3><p>Get structured, copy-ready output with token and cost shown on every run.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt0" id="security">
+    <div class="container trust">
+      <div>
+        <div class="kicker">Security &amp; governance</div>
+        <h2>Built the way a platform team would build it.</h2>
+        <p class="muted">Controls are mapped to OWASP Top 10, OWASP ASVS L1 and the OWASP Top 10 for LLM Applications.</p>
+        <ul class="checklist mt">
+          <li>{{ icon("circle-check") }}<span><strong>Guardrails as code.</strong> Every module's system rules live in a versioned MODULE.md and are always applied first.</span></li>
+          <li>{{ icon("circle-check") }}<span><strong>Prompt-injection aware.</strong> User input is delimited and treated as data; model output is escaped before display.</span></li>
+          <li>{{ icon("circle-check") }}<span><strong>Least privilege data access.</strong> The SQL agent runs SELECT-only against an isolated, read-only sample.</span></li>
+          <li>{{ icon("circle-check") }}<span><strong>Encrypted keys, full audit.</strong> API keys are encrypted at rest; admin actions and runs are logged.</span></li>
+        </ul>
+      </div>
+      <div class="kpi-band">
+        <div><strong class="grad-text">5</strong><span class="muted">starter agents</span></div>
+        <div><strong class="grad-text">3</strong><span class="muted">model providers</span></div>
+        <div><strong class="grad-text">24h</strong><span class="muted">approval SLA</span></div>
+        <div><strong class="grad-text">100%</strong><span class="muted">runs audited</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt0" id="faq">
+    <div class="container narrow">
+      <div class="section-head center"><div class="kicker">FAQ</div><h2>Questions leaders ask.</h2></div>
+      <details class="faq"><summary>Do I need my own API key?</summary><p>No. The platform key covers a daily token allowance. Add your own key in Settings to go beyond it.</p></details>
+      <details class="faq"><summary>How fast is approval?</summary><p>Instant when auto-approval is on. In review mode, requests are decided within 24 hours and overdue ones are flagged.</p></details>
+      <details class="faq"><summary>Can the SQL agent change data?</summary><p>No. It can only run a single SELECT, capped at 200 rows and 5 seconds, on a read-only sample database.</p></details>
+      <details class="faq"><summary>Is my input stored?</summary><p>Run metadata (tokens, cost, latency, status) is stored for analytics. Prompt bodies are not logged.</p></details>
+    </div>
+  </section>
+
+  <section class="section pt0">
+    <div class="container"><div class="cta-band">
+      <h2>Put governed AI to work.</h2>
+      <p class="muted">Request access and run your first agent in under two minutes.</p>
+      <a class="btn btn-primary btn-lg" href="/signup">Get access {{ icon("arrow-right", "icon-sm") }}</a>
+    </div></div>
+  </section>
+</main>
+<footer class="footer"><div class="container">
+  <span>© AgentHub · A prototype by Varghese Pathisseril</span>
+  <span>OWASP-aligned · WCAG 2.2 AA · <a href="/health">Status</a></span>
+</div></footer>
+{% endblock %}
