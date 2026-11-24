@@ -1,0 +1,31 @@
+{% extends "shell.html" %}
+{% block title %}Modules · AgentHub Admin{% endblock %}
+{% block heading %}Modules{% endblock %}
+{% block content %}
+<div class="page-head"><div><h2>Module catalog</h2>
+  <p>Guardrails are versioned in <code>modules/&lt;id&gt;/MODULE.md</code>. Runtime limits are set here.</p></div></div>
+<div class="grid g2">
+{% for m in rows %}{% set spec = specs[m.id] %}
+  <section class="panel">
+    <div class="flex between"><div class="flex"><div class="feature-icon mb0">{{ icon(m.icon) }}</div>
+      <div><h3 class="mb0">{{ m.name }}</h3><span class="subtle">v{{ m.version }} · {{ counts[m.id] }} users granted</span></div></div>
+      <span class="badge {{ 'b-ok' if m.enabled else 'b-bad' }}">{{ 'enabled' if m.enabled else 'disabled' }}</span></div>
+    <p class="muted mt">{{ m.description }}</p>
+    <form method="post" action="/admin/modules/{{ m.id }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="row">
+        <div class="field"><label for="mt-{{ m.id }}">Max output tokens</label><input id="mt-{{ m.id }}" type="number" name="max_tokens" min="50" max="8000" value="{{ m.max_tokens }}"></div>
+        <div class="field"><label for="tp-{{ m.id }}">Default temperature</label><input id="tp-{{ m.id }}" type="number" name="temperature" step="0.05" min="0" max="1" value="{{ m.temperature }}"></div>
+      </div>
+      <div class="field"><label for="pv-{{ m.id }}">Default provider</label><select id="pv-{{ m.id }}" name="default_provider">{% for p in ["anthropic","openai","gemini"] %}<option {% if p == m.default_provider %}selected{% endif %}>{{ p }}</option>{% endfor %}</select></div>
+      <div class="flex wrap">
+        <label class="check"><input type="checkbox" name="enabled" value="1" {% if m.enabled %}checked{% endif %}> Enabled</label>
+        <label class="check"><input type="checkbox" name="default_for_new_users" value="1" {% if m.default_for_new_users %}checked{% endif %}> Grant to new users</label>
+        <button class="btn btn-sm" type="submit">{{ icon("check", "icon-sm") }} Save</button>
+      </div>
+    </form>
+    {% if spec %}<details class="row-edit mt"><summary>View guardrail</summary><pre class="code">{{ spec.guardrail }}</pre></details>{% endif %}
+  </section>
+{% endfor %}
+</div>
+{% endblock %}

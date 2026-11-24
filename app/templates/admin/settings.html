@@ -1,0 +1,25 @@
+{% extends "shell.html" %}
+{% block title %}Settings · AgentHub Admin{% endblock %}
+{% block heading %}Platform settings{% endblock %}
+{% block content %}
+<form method="post" action="/admin/settings" class="grid g2">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <section class="panel">
+    <div class="panel-title">{{ icon("user-plus") }} Signup approval</div>
+    <fieldset class="field"><legend class="subtle">Approval mode</legend>
+      <label class="check"><input type="radio" name="approval_mode" value="auto" {% if s.approval_mode == "auto" %}checked{% endif %}> Auto-approve new signups</label>
+      <label class="check"><input type="radio" name="approval_mode" value="manual" {% if s.approval_mode == "manual" %}checked{% endif %}> Manual review with SLA</label>
+    </fieldset>
+    <div class="field"><label for="sla">SLA (hours)</label><input id="sla" name="approval_sla_hours" type="number" min="1" max="168" value="{{ s.approval_sla_hours }}"></div>
+    <label class="check"><input type="checkbox" name="auto_approve_on_sla_breach" value="1" {% if s.auto_approve_on_sla_breach == "true" %}checked{% endif %}> Auto-approve requests that breach the SLA</label>
+  </section>
+  <section class="panel">
+    <div class="panel-title">{{ icon("gauge") }} Cost &amp; providers</div>
+    <div class="field"><label for="cap">Default daily token cap (new users)</label><input id="cap" name="default_daily_token_cap" type="number" min="0" value="{{ s.default_daily_token_cap }}"></div>
+    <fieldset class="field"><legend class="subtle">Allowed providers</legend>
+      {% for p in ["anthropic","openai","gemini"] %}<label class="check"><input type="checkbox" name="allowed_providers" value="{{ p }}" {% if p in s.allowed_providers.split(",") %}checked{% endif %}> {{ p|title }}</label>{% endfor %}
+    </fieldset>
+    <button class="btn btn-primary" type="submit">{{ icon("check", "icon-sm") }} Save settings</button>
+  </section>
+</form>
+{% endblock %}

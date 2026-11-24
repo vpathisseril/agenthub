@@ -1,0 +1,61 @@
+{% extends "shell.html" %}
+{% block title %}Users & access · AgentHub Admin{% endblock %}
+{% block heading %}Users &amp; access{% endblock %}
+{% block content %}
+<div class="page-head"><div><h2>Approval queue</h2><p>Manual requests must be decided within the SLA.</p></div></div>
+{% if pending %}
+<div class="table-wrap"><table>
+  <thead><tr><th>Requested (UTC)</th><th>Name</th><th>Email</th><th>Reason</th><th>SLA</th><th>Decision</th></tr></thead>
+  <tbody>{% for r in pending %}
+  <tr><td class="num">{{ r.requested_at.strftime("%b %d %H:%M") }}</td><td>{{ r.user.full_name }}</td><td>{{ r.user.email }}</td>
+    <td class="muted">{{ r.reason or "—" }}</td>
+    <td>{% if r.sla_due_at %}{% set hrs = ((r.sla_due_at - now).total_seconds() / 3600)|round(1) %}
+      {% if hrs < 0 %}<span class="badge b-bad">{{ icon("triangle-alert", "icon-sm") }} overdue {% if -hrs >= 48 %}{{ (-hrs / 24)|round|int }}d{% else %}{{ -hrs }}h{% endif %}</span>
+      {% elif hrs < 6 %}<span class="badge b-warn">{{ icon("clock", "icon-sm") }} {{ hrs }}h left</span>
+      {% else %}<span class="badge">{{ icon("clock", "icon-sm") }} {{ hrs }}h left</span>{% endif %}{% else %}—{% endif %}</td>
+    <td class="flex">
+      <form method="post" action="/admin/requests/{{ r.id }}/approve"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm" type="submit">{{ icon("check", "icon-sm") }} Approve</button></form>
+      <form method="post" action="/admin/requests/{{ r.id }}/reject"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-danger" type="submit" data-confirm="Confirm reject"><span>Reject</span></button></form>
+    </td></tr>
+  {% endfor %}</tbody></table></div>
+{% else %}
+<div class="panel empty">{{ icon("circle-check") }}<p>No pending requests.</p></div>
+{% endif %}
+
+<div class="page-head mt-lg">
+  <div><h2>All users</h2><p>Status, role, module grants and daily token caps.</p></div>
+  <form class="toolbar" method="get" action="/admin/users" role="search">
+    <label class="sr-only" for="q">Search users</label><input id="q" type="search" name="q" value="{{ q }}" placeholder="Search name or email">
+    <label class="sr-only" for="status">Status</label>
+    <select id="status" name="status"><option value="">All statuses</option>{% for s in ["active","pending","suspended","rejected"] %}<option {% if s == status %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+    <button class="btn btn-sm" type="submit">{{ icon("search", "icon-sm") }} Filter</button>
+  </form>
+</div>
+<div class="table-wrap"><table>
+  <thead><tr><th>User</th><th>Status</th><th>Role</th><th>Modules</th><th>Tokens today</th><th>Last login</th><th></th></tr></thead>
+  <tbody>{% for u in rows %}
+  <tr>
+    <td><strong>{{ u.full_name }}</strong><br><span class="subtle">{{ u.email }}</span></td>
+    <td><span class="badge {{ {'active':'b-ok','pending':'b-warn','suspended':'b-bad','rejected':'b-bad'}[u.status] }}">{{ u.status }}</span></td>
+    <td>{{ u.role }}</td>
+    <td class="num">{{ u.grants|length }} / {{ modules|length }}</td>
+    <td class="num">{{ usage[u.id]|n }} / {{ u.daily_token_cap|n }}</td>
+    <td class="num">{{ u.last_login_at.strftime("%b %d %H:%M") if u.last_login_at else "—" }}</td>
+    <td>{% if u.status in ["active", "suspended"] %}
+      <details class="row-edit"><summary>Edit access</summary>
+        <form method="post" action="/admin/users/{{ u.id }}" class="mt">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="row">
+            <div class="field"><label for="st-{{ u.id }}">Status</label><select id="st-{{ u.id }}" name="status">{% for s in ["active","suspended"] %}<option {% if s == u.status %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+            <div class="field"><label for="ro-{{ u.id }}">Role</label><select id="ro-{{ u.id }}" name="role">{% for r in ["user","admin"] %}<option {% if r == u.role %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></div>
+          </div>
+          <div class="field"><label for="cap-{{ u.id }}">Daily token cap</label><input id="cap-{{ u.id }}" name="daily_token_cap" type="number" min="0" value="{{ u.daily_token_cap }}"></div>
+          <fieldset class="field"><legend class="subtle">Module grants</legend>
+            {% for m in modules %}<label class="check"><input type="checkbox" name="modules" value="{{ m.id }}" {% if (u.id, m.id) in grants %}checked{% endif %}> {{ m.name }}</label>{% endfor %}
+          </fieldset>
+          <button class="btn btn-sm" type="submit">{{ icon("check", "icon-sm") }} Save</button>
+        </form>
+      </details>{% endif %}</td>
+  </tr>
+  {% endfor %}</tbody></table></div>
+{% endblock %}

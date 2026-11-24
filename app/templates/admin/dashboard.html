@@ -1,0 +1,38 @@
+{% extends "shell.html" %}
+{% block title %}Analytics · AgentHub Admin{% endblock %}
+{% block heading %}Reporting &amp; analytics{% endblock %}
+{% block head %}<script src="/static/js/chart.min.js" defer></script><script src="/static/js/admin.js" defer></script>{% endblock %}
+{% block content %}
+{% set k = data.kpis %}
+<div class="page-head">
+  <div><h2>Platform health</h2><p>Last {{ days }} days · as of {{ as_of.strftime("%b %d, %Y %H:%M") }} UTC</p></div>
+  <div class="toolbar">
+    <nav class="seg" aria-label="Date range">{% for d in [7, 30, 90] %}<a class="{{ 'on' if d == days }}" href="?days={{ d }}">{{ d }}d</a>{% endfor %}</nav>
+    <a class="btn btn-sm" href="/admin/analytics.csv?days={{ days }}">{{ icon("download", "icon-sm") }} Export CSV</a>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="label">{{ icon("user-plus", "icon-sm") }} Signups</div><div class="value">{{ k.signups|n }}</div>
+    <div class="sub">{{ k.pending }} pending{% if k.overdue %} · <span class="badge b-bad">{{ k.overdue }} overdue</span>{% endif %}</div></div>
+  <div class="kpi"><div class="label">{{ icon("timer", "icon-sm") }} Median approval</div>
+    <div class="value">{% if k.median_approval_h is not none %}{{ k.median_approval_h }}h{% else %}—{% endif %}</div>
+    <div class="sub">{% if k.pct_within_sla is not none %}{{ k.pct_within_sla }}% within 24h SLA{% else %}manual reviews only{% endif %}</div></div>
+  <div class="kpi"><div class="label">{{ icon("users", "icon-sm") }} Active users</div><div class="value">{{ k.dau }} <span class="subtle">DAU</span></div><div class="sub">{{ k.wau }} WAU</div></div>
+  <div class="kpi"><div class="label">{{ icon("play", "icon-sm") }} Agent runs</div><div class="value">{{ k.runs|n }}</div><div class="sub">{{ k.error_rate }}% error rate</div></div>
+  <div class="kpi"><div class="label">{{ icon("cpu", "icon-sm") }} Tokens</div><div class="value">{{ k.tokens|n }}</div><div class="sub">p95 latency {{ k.p95_ms|n }} ms</div></div>
+  <div class="kpi"><div class="label">{{ icon("gauge", "icon-sm") }} Est. LLM cost</div><div class="value">${{ "%.2f"|format(k.cost) }}</div><div class="sub">list-price estimate</div></div>
+</div>
+
+<div class="grid g2">
+  <section class="panel"><div class="panel-title">{{ icon("chart-line") }} Agent runs per day, by module</div><div class="chart-box"><canvas id="chart-runs" role="img" aria-label="Stacked bar chart of agent runs per day by module"></canvas></div></section>
+  <section class="panel"><div class="panel-title">{{ icon("user-plus") }} Signups per day</div><div class="chart-box"><canvas id="chart-signups" role="img" aria-label="Bar chart of signups per day"></canvas></div></section>
+  <section class="panel"><div class="panel-title">{{ icon("chart-column") }} Est. cost by provider (USD)</div><div class="chart-box"><canvas id="chart-cost" role="img" aria-label="Bar chart of estimated cost by provider"></canvas></div></section>
+  <section class="panel"><div class="panel-title">{{ icon("users") }} Top users by tokens</div>
+    {% if data.top_users %}<div class="table-wrap"><table><thead><tr><th>User</th><th>Tokens</th></tr></thead><tbody>
+      {% for u in data.top_users %}<tr><td>{{ u.email }}</td><td class="num">{{ u.tokens|n }}</td></tr>{% endfor %}
+    </tbody></table></div>{% else %}<div class="empty"><p>No runs in this period.</p></div>{% endif %}
+  </section>
+</div>
+<script type="application/json" id="chart-data">{{ data|tojson }}</script>
+{% endblock %}

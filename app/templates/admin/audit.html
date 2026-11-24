@@ -1,0 +1,18 @@
+{% extends "shell.html" %}
+{% block title %}Audit log · AgentHub Admin{% endblock %}
+{% block heading %}Audit log{% endblock %}
+{% block content %}
+<div class="page-head"><div><h2>Audit trail</h2><p>Append-only record of sign-ins, approvals, access changes and settings. Latest 300.</p></div>
+  <form class="toolbar" method="get" action="/admin/audit">
+    <label class="sr-only" for="action">Action</label>
+    <select id="action" name="action"><option value="">All actions</option>{% for a in actions %}<option {% if a == action %}selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+    <label class="sr-only" for="actor">Actor</label><input id="actor" type="search" name="actor" value="{{ actor }}" placeholder="Actor email">
+    <button class="btn btn-sm" type="submit">{{ icon("search", "icon-sm") }} Filter</button>
+  </form></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>When (UTC)</th><th>Actor</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead>
+  <tbody>{% for r in rows %}
+    <tr><td class="num">{{ r.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><td>{{ r.actor }}</td><td><code>{{ r.action }}</code></td><td>{{ r.target }}</td><td class="muted">{{ r.detail }}</td></tr>
+  {% else %}<tr><td colspan="5" class="empty">No entries.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}
