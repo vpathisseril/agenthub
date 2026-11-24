@@ -1,0 +1,30 @@
+{% extends "shell.html" %}
+{% block title %}API keys · AgentHub{% endblock %}
+{% block heading %}API keys{% endblock %}
+{% block content %}
+<div class="page-head"><div><h2>Bring your own key</h2>
+  <p>Runs use your key instead of the platform key and don't count toward your daily cap ({{ user.daily_token_cap|n }} tokens).</p></div></div>
+<div class="grid g3">
+  {% for p in providers %}
+  {% set k = (keys|selectattr("provider", "equalto", p)|list|first) %}
+  <div class="panel">
+    <div class="panel-title">{{ icon("key-round") }} {{ p|title }}</div>
+    {% if k %}
+      <p><span class="badge b-ok">{{ icon("lock", "icon-sm") }} Saved</span> <span class="num">…{{ k.last4 }}</span></p>
+      <form method="post" action="/app/settings/keys/{{ p }}/delete">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="btn btn-sm btn-danger" type="submit" data-confirm="Click again to remove"><span>Remove key</span></button>
+      </form>
+    {% else %}
+      <form method="post" action="/app/settings/keys">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="provider" value="{{ p }}">
+        <div class="field"><label for="key-{{ p }}">API key</label>
+          <input id="key-{{ p }}" name="api_key" type="password" autocomplete="off" minlength="8" maxlength="300" required></div>
+        <button class="btn btn-sm" type="submit">{{ icon("lock", "icon-sm") }} Save encrypted</button>
+      </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+<p class="subtle mt">Keys are encrypted at rest (Fernet / AES-128) and only the last four characters are ever shown.</p>
+{% endblock %}

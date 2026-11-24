@@ -10,6 +10,9 @@ max_tokens: 1200
 temperature: 0.4
 tools: []
 user_configurable: [persona, tone, temperature, model, output_format, seniority]
+input_label: "Paste your resume, then the job description"
+input_placeholder: "RESUME:\n...\n\nJOB DESCRIPTION:\n..."
+examples: ["Match my resume to this Executive Director, Data Platform role", "Give me 5 interview questions with STAR outlines"]
 ---
 
 ## Purpose

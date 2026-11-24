@@ -1,0 +1,69 @@
+{% extends "shell.html" %}
+{% block title %}{{ module.name }} · AgentHub{% endblock %}
+{% block heading %}{{ module.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="flex"><div class="feature-icon mb0">{{ icon(module.icon) }}</div>
+    <div><h2>{{ module.name }}</h2><p>{{ module.description }}</p></div></div>
+  <div class="flex wrap">
+    {% for c in configs %}
+      <a class="badge {% if c.id == cfg.id %}b-info{% endif %}" href="?config={{ c.id }}">{{ icon("bot", "icon-sm") }} {{ c.name }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="split">
+  <section class="panel" aria-labelledby="cfg-title">
+    <div class="panel-title" id="cfg-title">{{ icon("sliders-horizontal") }} Agent configuration</div>
+    <form method="post" action="/app/modules/{{ module.id }}/config">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="config_id" value="{{ cfg.id }}">
+      <div class="field"><label for="name">Preset name</label><input id="name" name="name" type="text" maxlength="80" value="{{ cfg.name }}"></div>
+      <div class="row">
+        <div class="field"><label for="provider">Provider</label>
+          <select id="provider" name="provider">{% for p in providers %}<option value="{{ p }}" {% if p == cfg.provider %}selected{% endif %}>{{ p|title }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="model">Model</label>
+          <input id="model" name="model" type="text" maxlength="80" value="{{ cfg.model }}" placeholder="{{ default_models.get(cfg.provider, '') }}" aria-describedby="model-hint"></div>
+      </div>
+      <div class="hint" id="model-hint">Blank uses the cheapest capable default for the provider.</div>
+      <div class="field mt"><label for="persona">Persona</label>
+        <textarea id="persona" name="persona" rows="3" maxlength="600" placeholder="e.g. You coach executives moving into Data & AI leadership roles.">{{ cfg.persona }}</textarea></div>
+      <div class="row">
+        <div class="field"><label for="tone">Tone</label>
+          <select id="tone" name="tone">{% for t in tones %}<option {% if t == cfg.tone %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="output_format">Output format</label>
+          <select id="output_format" name="output_format">{% for f in formats %}<option {% if f == cfg.output_format %}selected{% endif %}>{{ f }}</option>{% endfor %}</select></div>
+      </div>
+      <div class="field"><label for="temperature">Creativity (temperature): <span id="temp-out" class="num">{{ cfg.temperature }}</span></label>
+        <input id="temperature" name="temperature" type="range" min="0" max="1" step="0.05" value="{{ cfg.temperature }}" data-out="temp-out"></div>
+      <div class="field"><label for="max_tokens">Max output tokens</label>
+        <input id="max_tokens" name="max_tokens" type="number" min="50" max="{{ module.max_tokens }}" value="{{ [cfg.max_tokens, module.max_tokens]|min }}">
+        <div class="hint">Capped at {{ module.max_tokens|n }} by the administrator.</div></div>
+      <div class="flex wrap">
+        <button class="btn btn-sm" type="submit">{{ icon("check", "icon-sm") }} Save</button>
+        <button class="btn btn-sm btn-ghost" type="submit" name="save_as_new" value="1">Save as new preset</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel" aria-labelledby="run-title">
+    <div class="panel-title" id="run-title">{{ icon("play") }} Run “{{ cfg.name }}”</div>
+    <form hx-post="/app/modules/{{ module.id }}/run" hx-target="#output" hx-swap="innerHTML" hx-indicator="#run-btn" hx-disabled-elt="#run-btn">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="config_id" value="{{ cfg.id }}">
+      <label for="user_input">{{ spec.input_label if spec else "Your input" }}</label>
+      <textarea id="user_input" name="user_input" required maxlength="8000" placeholder="{{ spec.input_placeholder if spec else '' }}"></textarea>
+      {% if spec and spec.examples %}
+      <div class="chips" aria-label="Examples">{% for ex in spec.examples %}<button type="button" class="chip" data-fill="{{ ex }}">{{ ex }}</button>{% endfor %}</div>
+      {% endif %}
+      <div class="flex between mt">
+        <span class="subtle">{{ icon("shield-check", "icon-sm") }} Guardrail {{ module.id }} v{{ module.version }} applied</span>
+        <button class="btn btn-primary" id="run-btn" type="submit"><span class="spinner htmx-indicator"></span> Run agent {{ icon("arrow-right", "icon-sm") }}</button>
+      </div>
+    </form>
+    <div id="output" class="output mt" aria-live="polite">
+      <div class="empty">{{ icon("sparkles") }}<p>Your result will appear here.</p></div>
+    </div>
+  </section>
+</div>
+{% endblock %}

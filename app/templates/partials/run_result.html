@@ -1,0 +1,23 @@
+{% if error %}
+<div class="alert alert-error" role="alert">{{ icon("triangle-alert", "icon-sm") }} <span>{{ error }}</span></div>
+{% else %}
+<div class="run-meta">
+  <span class="badge {{ 'b-info' if result.status == 'cached' else 'b-ok' }}">{{ result.status }}</span>
+  <span class="badge">{{ icon("cpu", "icon-sm") }} {{ result.model }}</span>
+  <span class="badge num">{{ (result.tokens_in + result.tokens_out)|n }} tokens</span>
+  <span class="badge num">${{ "%.5f"|format(result.cost) }}</span>
+  <span class="badge num">{{ result.latency_ms|n }} ms</span>
+  <span class="badge num">Today: {{ used|n }} / {{ cap|n }}</span>
+</div>
+{% for n in result.notes %}<div class="alert alert-info">{{ icon("sparkles", "icon-sm") }} <span>{{ n }}</span></div>{% endfor %}
+<div class="md" id="result-body">{{ html }}</div>
+{% if result.table %}
+  {% set cols, rows = result.table %}
+  <h4 class="mt">Result <span class="subtle">({{ rows|length }} rows, read-only)</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr>{% for c in cols %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for r in rows %}<tr>{% for v in r %}<td class="num">{{ v }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+  </table></div>
+{% endif %}
+<div class="flex mt"><button type="button" class="btn btn-sm" data-copy="result-body">{{ icon("copy", "icon-sm") }} <span>Copy</span></button></div>
+{% endif %}

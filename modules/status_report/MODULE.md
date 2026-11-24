@@ -10,6 +10,9 @@ max_tokens: 800
 temperature: 0.3
 tools: []
 user_configurable: [persona, tone, audience, model, output_format]
+input_label: "Paste this week's raw notes"
+input_placeholder: "- shipped X\n- blocked on Y\n- need decision on Z"
+examples: ["Turn my notes into an executive weekly status", "Draft a RAG status for the steering committee"]
 ---
 
 ## Purpose

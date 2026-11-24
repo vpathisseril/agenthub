@@ -10,6 +10,9 @@ max_tokens: 1500
 temperature: 0.3
 tools: []
 user_configurable: [persona, detail_level, methodology, model, output_format]
+input_label: "Describe the raw ask or paste the request"
+input_placeholder: "e.g. Finance wants a self-serve churn dashboard by Q2..."
+examples: ["Break this ask into INVEST stories with Gherkin AC", "What open questions should I ask the sponsor?"]
 ---
 
 ## Purpose
