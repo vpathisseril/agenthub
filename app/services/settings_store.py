@@ -13,6 +13,7 @@ DEFAULTS: dict[str, str] = {
     "auto_approve_on_sla_breach": "true" if get_settings().auto_approve_on_sla_breach else "false",
     "default_daily_token_cap": str(get_settings().default_daily_token_cap),
     "allowed_providers": "anthropic,openai,gemini",
+    "notify_email": get_settings().admin_notify_email,
 }
 
 

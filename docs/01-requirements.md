@@ -28,6 +28,7 @@
 | US-ADM-2 | Admin modules | As an admin, I want to enable or disable modules and set token, temperature and provider defaults | Must |
 | US-ADM-3 | Settings | As an admin, I want to set the approval mode, SLA, default cap and allowed providers | Must |
 | US-RPT-1 | Reporting | As an admin, I want KPIs and charts (signups, SLA, DAU/WAU, runs, tokens, cost, errors, p95) with CSV export | Must |
+| US-NTF-1 | Notifications | As the owner, I want an email for each access request with approval instructions, so that no request waits unseen | Should |
 | US-AUD-1 | Audit | As an admin, I want an audit log of sign-ins, approvals, access changes and settings | Must |
 
 ## Acceptance criteria (Gherkin) → tests

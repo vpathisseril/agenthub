@@ -30,6 +30,24 @@ In GitHub, go to Settings → Branches → add a rule for `main`: require a pull
 python -m scripts.smoke https://<your-app>.replit.app
 ```
 
+## Approval email notifications
+The owner address (`ADMIN_NOTIFY_EMAIL`, or Admin → Settings → *Approval notification email*) gets:
+- **Manual mode:** an email for every new request, with the requester's details, the SLA deadline and step-by-step approval instructions linking to `/admin/users`.
+- **Auto mode:** an FYI for every auto-approved signup, with how to suspend access.
+- **SLA breach:** an "OVERDUE" alert when a pending request passes its deadline.
+
+To deliver real email (default is log-only), add these Secrets and redeploy:
+
+| Secret | Gmail example |
+| --- | --- |
+| `EMAIL_BACKEND` | `smtp` |
+| `SMTP_HOST` / `SMTP_PORT` | `smtp.gmail.com` / `587` |
+| `SMTP_USER` | the Gmail address that sends |
+| `SMTP_PASSWORD` | a Gmail **App Password** (Google Account → Security → 2-Step Verification → App passwords) |
+| `APP_BASE_URL` | your live URL, for links in the email |
+
+Then use **Admin → Settings → Send test email** to confirm delivery.
+
 ## Operations
 | Task | How |
 | --- | --- |

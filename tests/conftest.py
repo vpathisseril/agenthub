@@ -17,6 +17,8 @@ os.environ.update(
         "ADMIN_PASSWORD": "Admin-Pass-2026",
         "LLM_FAKE_MODE": "true",
         "SECRET_KEY": "test-secret-key-not-for-prod",
+        "ADMIN_NOTIFY_EMAIL": "owner@example.com",
+        "APP_BASE_URL": "https://agenthub.test",
     }
 )
 
@@ -27,7 +29,7 @@ from sqlalchemy.orm import Session  # noqa: E402
 from app.core import ratelimit  # noqa: E402
 from app.core.db import Base, SessionLocal, engine  # noqa: E402
 from app.main import app, bootstrap  # noqa: E402
-from app.services import agents  # noqa: E402
+from app.services import agents, notify  # noqa: E402
 
 STRONG_PW = "Str0ng-Password-1"
 
@@ -39,6 +41,7 @@ def fresh_db() -> Iterator[None]:
     bootstrap()
     ratelimit.reset()
     agents.clear_cache()
+    notify.sent.clear()
     yield
 
 

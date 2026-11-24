@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.db import get_db
+from app.core.db import SessionLocal, get_db
 from app.core.deps import csrf_protect, get_csrf_token, optional_user
 from app.core.ratelimit import rate_limit
 from app.core.security import password_problems, verify_password
 from app.core.templating import flash, render
 from app.models import SignupRequest, User, utcnow
-from app.services import approval, audit
+from app.services import approval, audit, notify
 from app.services.settings_store import get_setting
 
 router = APIRouter(dependencies=[Depends(csrf_protect)])
@@ -36,9 +36,18 @@ def signup_form(
     )
 
 
+def _notify_owner(user_id: int, base_url: str) -> None:
+    with SessionLocal() as db:
+        user = db.get(User, user_id)
+        req = approval.latest_request(db, user) if user else None
+        if req is not None:
+            notify.notify_signup(db, req, base_url)
+
+
 @router.post("/signup", dependencies=[Depends(rate_limit(5, 600))])
 def signup(
     request: Request,
+    background: BackgroundTasks,
     full_name: str = Form(..., max_length=120),
     email: str = Form(..., max_length=255),
     password: str = Form(..., max_length=128),
@@ -68,6 +77,7 @@ def signup(
             {"errors": [str(exc)], "form": form, "mode": mode},
             status_code=409,
         )
+    background.add_task(_notify_owner, user.id, str(request.base_url))
     if user.status == "active":
         _start_session(request, user)
         user.last_login_at = utcnow()

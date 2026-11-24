@@ -1,6 +1,10 @@
 # Changelog
 All notable changes follow [Keep a Changelog](https://keepachangelog.com) and SemVer.
 
+## [1.1.0] - 2026-11-24
+### Added
+- Approval email notifications to the owner: new request (with approval instructions and SLA deadline), auto-approved FYI, SLA-breach alert. SMTP or log backend; owner email editable in Admin → Settings with a "Send test email" button. 6 new tests (72 total).
+
 ## [1.0.0] - 2026-11-24
 ### Added
 - Deploy: `.replit` (migrations on start, Autoscale), runbook, smoke test, README with screenshots.

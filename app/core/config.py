@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     approval_sla_hours: int = 24
     auto_approve_on_sla_breach: bool = False
 
+    # Notifications (approval emails to the owner)
+    admin_notify_email: str = ""  # initial value; editable in Admin > Settings
+    app_base_url: str = ""  # e.g. https://agenthub.replit.app (for links in emails)
+    email_backend: str = "log"  # log | smtp
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+
     # LLM — hybrid key model
     anthropic_api_key: str = ""
     openai_api_key: str = ""

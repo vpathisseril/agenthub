@@ -1,6 +1,14 @@
 {% extends "shell.html" %}
-{% block title %}Settings · AgentHub Admin{% endblock %}
-{% block heading %}Platform settings{% endblock %}
+{% block title %}Settings · AgentHub Admin<form method="post" action="/admin/settings/test-email" class="mt">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button class="btn btn-sm" type="submit">{{ icon("activity", "icon-sm") }} Send test email</button>
+</form>
+{% endblock %}
+{% block heading %}Platform settings<form method="post" action="/admin/settings/test-email" class="mt">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button class="btn btn-sm" type="submit">{{ icon("activity", "icon-sm") }} Send test email</button>
+</form>
+{% endblock %}
 {% block content %}
 <form method="post" action="/admin/settings" class="grid g2">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -12,6 +20,10 @@
     </fieldset>
     <div class="field"><label for="sla">SLA (hours)</label><input id="sla" name="approval_sla_hours" type="number" min="1" max="168" value="{{ s.approval_sla_hours }}"></div>
     <label class="check"><input type="checkbox" name="auto_approve_on_sla_breach" value="1" {% if s.auto_approve_on_sla_breach == "true" %}checked{% endif %}> Auto-approve requests that breach the SLA</label>
+    <div class="field mt"><label for="notify_email">Approval notification email</label>
+      <input id="notify_email" name="notify_email" type="email" value="{{ s.notify_email }}" placeholder="owner@example.com" aria-describedby="notify-hint">
+      <div class="hint" id="notify-hint">Gets every new access request (with approval instructions) and SLA-breach alerts.
+        Delivery: <strong>{{ "SMTP" if email_backend == "smtp" else "log only (not sent)" }}</strong>.</div></div>
   </section>
   <section class="panel">
     <div class="panel-title">{{ icon("gauge") }} Cost &amp; providers</div>
@@ -21,5 +33,9 @@
     </fieldset>
     <button class="btn btn-primary" type="submit">{{ icon("check", "icon-sm") }} Save settings</button>
   </section>
+</form>
+<form method="post" action="/admin/settings/test-email" class="mt">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button class="btn btn-sm" type="submit">{{ icon("activity", "icon-sm") }} Send test email</button>
 </form>
 {% endblock %}

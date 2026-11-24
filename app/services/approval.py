@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 from app.models import Module, SignupRequest, User, UserModuleAccess, utcnow
-from app.services import audit
+from app.services import audit, notify
 from app.services.settings_store import get_setting
 
 
@@ -25,6 +25,14 @@ def grant_default_modules(db: Session, user: User) -> None:
     for module in defaults:
         if module.id not in existing:
             user.grants.append(UserModuleAccess(module_id=module.id))
+
+
+def latest_request(db: Session, user: User) -> SignupRequest | None:
+    return db.scalar(
+        select(SignupRequest)
+        .where(SignupRequest.user_id == user.id)
+        .order_by(SignupRequest.id.desc())
+    )
 
 
 def register(db: Session, email: str, full_name: str, password: str, reason: str = "") -> User:
@@ -100,4 +108,5 @@ def check_sla(db: Session) -> int:
     db.commit()
     for req in overdue:
         audit.record(db, "system", "signup.sla_breach", req.user.email, f"auto_approved={auto}")
+        notify.notify_sla_breach(db, req, auto)
     return len(overdue)

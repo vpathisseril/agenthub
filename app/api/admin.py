@@ -11,11 +11,12 @@ from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.deps import csrf_protect, require_admin
 from app.core.templating import flash, render
 from app.models import AuditLog, Module, SignupRequest, User, UserModuleAccess, utcnow
-from app.services import agents, analytics, approval, audit
+from app.services import agents, analytics, approval, audit, notify
 from app.services.modules_registry import get_spec
 from app.services.settings_store import get_setting, set_setting
 
@@ -245,11 +246,17 @@ def settings_page(
         "auto_approve_on_sla_breach",
         "default_daily_token_cap",
         "allowed_providers",
+        "notify_email",
     )
     return render(
         request,
         "admin/settings.html",
-        {"user": admin, "nav_modules": _nav(db), "s": {k: get_setting(db, k) for k in keys}},
+        {
+            "user": admin,
+            "nav_modules": _nav(db),
+            "s": {k: get_setting(db, k) for k in keys},
+            "email_backend": get_settings().email_backend,
+        },
     )
 
 
@@ -264,10 +271,19 @@ async def save_settings(
     providers = [
         p for p in form.getlist("allowed_providers") if p in ("anthropic", "openai", "gemini")
     ]
-    if mode not in ("auto", "manual") or not sla.isdigit() or not cap.isdigit() or not providers:
+    notify_to = str(form.get("notify_email", "")).strip()
+    bad_email = bool(notify_to) and not notify.EMAIL_RE.match(notify_to)
+    if (
+        mode not in ("auto", "manual")
+        or not sla.isdigit()
+        or not cap.isdigit()
+        or not providers
+        or bad_email
+    ):
         flash(
             request,
-            "Check the values: SLA and cap must be numbers and one provider must be on.",
+            "Check the values: SLA and cap must be numbers, one provider must be on, "
+            "and the notification email must be valid.",
             "error",
         )
         return RedirectResponse("/admin/settings", status_code=303)
@@ -277,11 +293,42 @@ async def save_settings(
         "auto_approve_on_sla_breach": "true" if form.get("auto_approve_on_sla_breach") else "false",
         "default_daily_token_cap": cap,
         "allowed_providers": ",".join(str(p) for p in providers),
+        "notify_email": notify_to,
     }
     for k, v in new.items():
         set_setting(db, k, v)
     audit.record(db, admin.email, "settings.update", "", json.dumps(new))
     flash(request, "Settings saved.", "success")
+    return RedirectResponse("/admin/settings", status_code=303)
+
+
+@router.post("/settings/test-email")
+def test_email(
+    request: Request, admin: User = Depends(require_admin), db: Session = Depends(get_db)
+) -> Response:
+    to = notify.owner_email(db)
+    if not notify.EMAIL_RE.match(to):
+        flash(request, "Set an approval notification email first.", "error")
+        return RedirectResponse("/admin/settings", status_code=303)
+    ok = notify.send_email(
+        to,
+        "[AgentHub] Test notification",
+        "This is a test from AgentHub. Approval requests will arrive at this address.\n\n"
+        + notify._instructions(str(request.base_url).rstrip("/")),
+    )
+    audit.record(db, admin.email, "settings.test_email", to, f"ok={ok}")
+    backend = get_settings().email_backend
+    if ok and backend == "smtp":
+        flash(request, f"Test email sent to {to}.", "success")
+    elif ok:
+        flash(
+            request,
+            "Email is in log-only mode: the message was written to the app log. "
+            "Set EMAIL_BACKEND=smtp and SMTP secrets to deliver real email.",
+            "info",
+        )
+    else:
+        flash(request, "Sending failed. Check the SMTP secrets and the app log.", "error")
     return RedirectResponse("/admin/settings", status_code=303)
 
 

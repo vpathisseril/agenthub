@@ -15,10 +15,11 @@
 | **Safety** | Guardrails as code (`MODULE.md`), prompt-injection defences, escaped output, read-only SQL sandbox |
 | **Cost** | Per-user daily token caps, model tiering, 10-minute cache, cost per run/module/provider |
 | **Choice** | Anthropic, OpenAI and Gemini behind one interface; platform key or bring-your-own (encrypted) |
-| **Evidence** | Gherkin AC → 66 automated tests (95% coverage), CI gates, threat model, ADRs |
+| **Evidence** | Gherkin AC → 72 automated tests (95% coverage), CI gates, threat model, ADRs |
 
 ## Features
 - **Landing and signup** with instant auto-approval or manual review (24h SLA countdown, breach flagging, optional auto-approve on breach)
+- **Owner email alerts** for every access request, with approval instructions and the SLA deadline, plus overdue alerts
 - **Agent Builder**: provider, model, persona, tone, output format, temperature, max tokens (clamped by admin), saved presets
 - **Five starter modules**: Career Coach · Research Summarizer · Data/SQL Assistant (runs read-only SQL on a telecom sample) · Status Report Writer · Requirements Analyst
 - **Admin console**: approval queue, user status/role/caps/grants, module catalog and limits, platform settings, audit log
