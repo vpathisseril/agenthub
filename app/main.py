@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
+from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -35,7 +37,21 @@ CSP = (
 )
 
 
-def bootstrap() -> None:
+def bootstrap(attempts: int = 6, delay: float = 2.0) -> None:
+    """Run startup tasks, retrying while a serverless Postgres wakes up or drops a connection."""
+    for attempt in range(1, attempts + 1):
+        try:
+            _bootstrap()
+            return
+        except OperationalError:
+            if attempt == attempts:
+                raise
+            log.warning("Database not ready (attempt %s/%s); retrying", attempt, attempts)
+            engine.dispose()
+            time.sleep(delay * attempt)
+
+
+def _bootstrap() -> None:
     """Idempotent startup: tables (dev/test), modules, admin seed, sample data."""
     settings = get_settings()
     if settings.database_url.startswith("sqlite"):

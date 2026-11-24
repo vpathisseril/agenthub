@@ -16,7 +16,7 @@ class Base(DeclarativeBase):
 
 
 def make_engine(url: str) -> Engine:
-    kwargs: dict[str, object] = {"pool_pre_ping": True}
+    kwargs: dict[str, object] = {"pool_pre_ping": True, "pool_recycle": 300}
     if url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
     return create_engine(url, **kwargs)

@@ -305,3 +305,29 @@ def test_version_bump_refreshes_module_limits(db: Session) -> None:
     sync_modules(db)
     db.refresh(m)
     assert (m.version, m.max_tokens) == ("1.1.0", 2000)
+
+
+def test_bootstrap_retries_when_db_drops(monkeypatch: pytest.MonkeyPatch) -> None:
+    from sqlalchemy.exc import OperationalError
+
+    import app.main as main
+
+    calls: list[int] = []
+
+    def flaky() -> None:
+        calls.append(1)
+        if len(calls) < 3:
+            raise OperationalError("SELECT 1", {}, Exception("terminating connection"))
+
+    monkeypatch.setattr(main, "_bootstrap", flaky)
+    monkeypatch.setattr(main.time, "sleep", lambda s: None)
+    main.bootstrap()
+    assert len(calls) == 3
+    calls.clear()
+    monkeypatch.setattr(
+        main,
+        "_bootstrap",
+        lambda: (_ for _ in ()).throw(OperationalError("x", {}, Exception("down"))),
+    )
+    with pytest.raises(OperationalError):
+        main.bootstrap(attempts=2)
