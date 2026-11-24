@@ -20,17 +20,19 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -r requirements.txt pytest pytest-cov ruff mypy bandit pip-audit types-PyYAML
       - name: Lint (ruff)
         run: ruff check . && ruff format --check .
-      - name: Type check (mypy)
+      - name: Type check (mypy --strict)
         run: mypy
-      - name: Tests
-        run: pytest --cov=app --cov-report=term-missing
+      - name: Tests (coverage gate 80% on services)
+        run: pytest --cov=app --cov-report=term-missing && pytest -q --cov=app/services --cov-fail-under=80
       - name: Security scan (bandit)
-        run: bandit -q -r app
+        run: bandit -q -r app -c pyproject.toml
       - name: Dependency audit (pip-audit)
-        run: pip-audit --strict --skip-editable
+        run: pip-audit -r requirements.txt
+      - name: Migrations apply cleanly
+        run: DATABASE_URL=sqlite:///./ci.db alembic upgrade head
       - name: Secret scan (gitleaks)
         uses: gitleaks/gitleaks-action@v2
         env:
